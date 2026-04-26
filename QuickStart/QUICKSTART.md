@@ -153,4 +153,4 @@ Locate `.github/workflows/prism-pipeline.yml` in the repository. Once you config
 
 ---
 
-For detailed architecture diagrams, development roadmaps, and advanced configurations, please refer to [README.md](README.md) and [DOCS/PROJECT.md](DOCS/PROJECT.md).
+For detailed architecture diagrams, development roadmaps, and advanced configurations, please refer to [README.md](README.md)

@@ -151,4 +151,4 @@ TechDistill 采用针对 GitHub Actions 优化的无状态设计。通过利用 
 
 ---
 
-详细的架构说明、路线图和高级配置，请参阅 [README.md](README.md) 和 [DOCS/PROJECT.md](DOCS/PROJECT.md)。
+详细的架构说明、路线图和高级配置，请参阅 [README.md](README.md)。
