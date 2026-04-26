@@ -83,7 +83,7 @@ The repository includes [`.github/workflows/prism-pipeline.yml`](.github/workflo
 
 - **Schedule:** `cron: "28 6 * * *"` — once per day at **06:28 UTC** (adjust the expression in the workflow file if you want a different time).
 - **Manual runs:** `workflow_dispatch` is enabled so you can start a run from the Actions tab.
-- **Secrets:** Configure repository secrets to match your needs (see the comments at the top of the workflow file and [`.env-example`](.env-example)). Typical values include `PH_API_TOKEN`, `GH_TOKEN` (injected as `GITHUB_TOKEN`), `OPENROUTER_API_KEY`, and optionally `HF_TOKEN`, `TG_BOT_TOKEN`, `TG_CHAT_ID`, and `OPENROUTER_CHAT_COMPLETIONS_EXTRA_JSON`. **How to obtain each credential** is documented in [**`Access_Token/en.md`**](Access_Token/en.md) (English)。
+- **Secrets:** Configure repository secrets to match your needs (see the comments at the top of the workflow file and [`.env-example`](.env-example)). Typical values include `PH_API_TOKEN`, `GH_TOKEN` (injected as `GITHUB_TOKEN`), `HF_TOKEN`, `OPENROUTER_API_KEY`, and optionally `TG_BOT_TOKEN`, `TG_CHAT_ID`, and `OPENROUTER_CHAT_COMPLETIONS_EXTRA_JSON`. **How to obtain each credential** is documented in [**`Access_Token/en.md`**](Access_Token/en.md) (English)。
 - **Artifacts:** The default job does not commit reports to the branch; output exists for that run on the runner unless you add upload/push steps.
 
 ---
@@ -109,6 +109,11 @@ Planned work includes:
 ### 1. Install dependencies
 
 ```bash
+# Create a virtual environment (Recommended)
+python3.12 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
@@ -125,13 +130,13 @@ PH_API_TOKEN=YOUR_PH_API_TOKEN_HERE
 # GitHub Personal Access Token (higher API rate limits)
 GITHUB_TOKEN=YOUR_GITHUB_TOKEN_HERE
 
-# Hugging Face Access Token (optional; improves API rate limits)
+# Hugging Face Access Token (required to bypass rate limits and enable deep data retrieval)
 # Create at: https://huggingface.co/settings/tokens
 HF_TOKEN=YOUR_HF_TOKEN_HERE
 
 OPENROUTER_API_KEY=YOUR_OPENROUTER_API_KEY_HERE
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
-OPENROUTER_MODEL=google/gemini-2.0-flash-001
+OPENROUTER_MODEL=deepseek/deepseek-v3.2
 
 TG_BOT_TOKEN=YOUR_Telegram_Bot_Token_HERE
 
@@ -161,7 +166,7 @@ AI_COMMENT_MAX_TOKENS=768
 Notes:
 
 - `PH_API_TOKEN` is required for Product Hunt scraping
-- `GITHUB_TOKEN` and `HF_TOKEN` are optional but improve API availability and limits
+- `GITHUB_TOKEN` and `HF_TOKEN` are required to bypass rate limits and enable deep data retrieval
 - `OPENROUTER_*` configures an OpenRouter-compatible gateway; if `OPENROUTER_API_KEY` is missing, AI analysis and the overview may be skipped or degraded
 - Telegram push is enabled only when both `TG_BOT_TOKEN` and `TG_CHAT_ID` are set
 - `REPORT_WATCH_DIR` is the watch path; default is `reports`
@@ -225,6 +230,24 @@ reports/
 - `github.md` — GitHub Trending report
 - `hf.md` — Hugging Face report
 - `ph.md` — Product Hunt report
+
+---
+
+## Troubleshooting
+
+| Issue | Resolution |
+|------|---------|
+| `PH_API_TOKEN` missing | Product Hunt scraping requires a token. Generate one in the Product Hunt Developer Dashboard. |
+| AI analysis skipped | Verify `OPENROUTER_API_KEY` is correctly set and has remaining credit. |
+| Telegram notification failed | Ensure both `TG_BOT_TOKEN` and `TG_CHAT_ID` are valid. |
+| Provider Error | In the OpenRouter model overview, check the "Providers" section. Add the specific provider to your "Allowed Providers" list in OpenRouter's privacy settings. |
+| Privacy Policy Error (Free Models) | In OpenRouter Settings > Privacy > Data Policies, ensure the two checkboxes for "Free endpoints" are enabled. |
+
+### Technical Edge Cases
+
+| Error | Cause | Resolution |
+|------|---------|---------|
+| `LocalProtocolError` | Triggered by Rate Limiting when calling free OpenRouter APIs concurrently (common on GHA nodes like Azure). | **Recommended:** Switch to a low-cost paid model for higher QPS. For local testing, you may continue using free models as concurrency is usually lower. |
 
 ---
 ## Support Me

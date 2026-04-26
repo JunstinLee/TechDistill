@@ -84,7 +84,7 @@ graph LR
 
 - **定时：** `cron: "28 6 * * *"` — 每天在 **UTC 06:28** 运行一次（若要改时间，请直接修改 workflow 里的 cron）。
 - **手动：** 已启用 `workflow_dispatch`，可在 Actions 页面手动触发。
-- **密钥：** 在仓库的 Actions Secrets 中配置，与 workflow 文件顶部注释及根目录 [`.env-example`](.env-example) 对应。常见项包括 `PH_API_TOKEN`、`GH_TOKEN`（注入为环境变量 `GITHUB_TOKEN`）、`OPENROUTER_API_KEY`，以及可选的 `HF_TOKEN`、`TG_BOT_TOKEN`、`TG_CHAT_ID`、`OPENROUTER_CHAT_COMPLETIONS_EXTRA_JSON`。**各项凭证的获取教程**见 [**`Access_Token/cn.md`**](Access_Token/cn.md)（简体中文。
+- **密钥：** 在仓库的 Actions Secrets 中配置，与 workflow 文件顶部注释及根目录 [`.env-example`](.env-example) 对应。常见项包括 `PH_API_TOKEN`、`GH_TOKEN`（注入为环境变量 `GITHUB_TOKEN`）、`HF_TOKEN`、`OPENROUTER_API_KEY`，以及可选的 `TG_BOT_TOKEN`、`TG_CHAT_ID`、`OPENROUTER_CHAT_COMPLETIONS_EXTRA_JSON`。**各项凭证的获取教程**见 [**`Access_Token/cn.md`**](Access_Token/cn.md)（简体中文。
 - **产物：** 默认任务不会把报告提交回分支；除非自行增加上传或推送步骤，否则报告仅存在于当次 Job 的运行环境中。
 
 ---
@@ -110,6 +110,11 @@ graph LR
 ### 1. 安装依赖
 
 ```bash
+# 创建虚拟环境（推荐）
+python3.12 -m venv .venv
+source .venv/bin/activate
+
+# 安装依赖包
 pip install -r requirements.txt
 ```
 
@@ -126,13 +131,13 @@ PH_API_TOKEN=YOUR_PH_API_TOKEN_HERE
 # GitHub Personal Access Token (提升 API 限制)
 GITHUB_TOKEN=YOUR_GITHUB_TOKEN_HERE
 
-# Hugging Face Access Token (可选，用于提升 API 速率限制)
+# Hugging Face Access Token (必需，用于绕过速率限制并实现深层数据检索)
 # 获取地址: https://huggingface.co/settings/tokens
 HF_TOKEN=YOUR_HF_TOKEN_HERE
 
 OPENROUTER_API_KEY=YOUR_OPENROUTER_API_KEY_HERE
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
-OPENROUTER_MODEL=google/gemini-2.0-flash-001
+OPENROUTER_MODEL=deepseek/deepseek-v3.2
 
 TG_BOT_TOKEN=YOUR_Telegram_Bot_Token_HERE
 
@@ -162,7 +167,7 @@ AI_COMMENT_MAX_TOKENS=768
 说明：
 
 - `PH_API_TOKEN` 是抓取 Product Hunt 的必需项
-- `GITHUB_TOKEN` 和 `HF_TOKEN` 不是必需，但有助于提升 API 可用性
+- `GITHUB_TOKEN` 和 `HF_TOKEN` 是绕过速率限制并实现深层数据检索的必需项
 - `OPENROUTER_*` 控制 OpenRouter 兼容网关；`OPENROUTER_API_KEY` 缺失时，AI 分析与总览可能跳过或回退
 - `TG_BOT_TOKEN` 与 `TG_CHAT_ID` 同时配置时，才会启用 Telegram 推送
 - `REPORT_WATCH_DIR` 为监听目录，默认 `reports`
@@ -226,6 +231,24 @@ reports/
 - `github.md` 是 GitHub Trending 详细报告
 - `hf.md` 是 Hugging Face 详细报告
 - `ph.md` 是 Product Hunt 详细报告
+
+---
+
+## 故障排除
+
+| 问题 | 解决方案 |
+|------|---------|
+| `PH_API_TOKEN` 缺失错误 | Product Hunt 抓取需要此 Token。请从 Product Hunt 开发者后台获取。 |
+| AI 分析被跳过 | 确保 `OPENROUTER_API_KEY` 已设置且有效。 |
+| Telegram 未推送 | 检查 `TG_BOT_TOKEN` 和 `TG_CHAT_ID` 是否都已配置。 |
+| 提供商错误 | 在选定模型的 overview 部分找到 Providers 部分，复制所需的 Providers 名称，在 OpenRouter 的 setting 部分找到 privacy，并在 privacy 中的 Providers 选项添加所需的 Providers。 |
+| 隐私策略错误（此错误在使用免费模型时出现） | 在 OpenRouter 的 setting 部分找到 privacy 中的 Data Policies 部分，勾选含有 Free endpoints 的两个选项。 |
+
+### 技术边界情况
+
+| 问题 | 原因 | 解决方法 |
+|------|---------|---------|
+| `LocalProtocolError` 错误 | 在 GitHub Actions（如 Azure 机房节点）并发调用 OpenRouter 免费 API 时，由于 API 速率限制（Rate Limiting）触发的网络协议异常。 | **建议：** 在生产环境或 CI/CD 流水线中切换至低价付费模型以获取更高的 QPS 限额。本地测试时可尝试使用免费模型，无需降低并发。 |
 
 ---
 
