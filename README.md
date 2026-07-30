@@ -193,6 +193,7 @@ Examples:
 
 ```bash
 # Default run
+
 python main.py
 
 # No deep fetch or AI
